@@ -16,63 +16,48 @@
 
 enum { PASCALS_TRIANGLE_MAX_ROWS_FOR_UINT64 = 68 };
 
-static uint64_t **create_pascals_triangle(size_t num_rows)
+static inline size_t cord(size_t a, size_t b)
 {
-	uint64_t **triangle;
+	return a * (a + 1) / 2 + b;
+}
+
+static uint64_t *create_pascals_triangle(size_t num_rows)
+{
+	uint64_t *triangle;
 	size_t i, j;
 
 	if (!num_rows || num_rows > PASCALS_TRIANGLE_MAX_ROWS_FOR_UINT64) {
 		errno = EINVAL;
 		return NULL;
 	}
-	
-	triangle = reallocarray(NULL, num_rows + 1, sizeof(*triangle));
+
+	triangle = reallocarray(NULL, cord(num_rows, 0), sizeof(*triangle));
 	if (!triangle)
 		return NULL;
-	triangle[num_rows] = NULL;
 
 	for (i = 0; i < num_rows; ++i) {
-		triangle[i] = reallocarray(NULL, i + 1, sizeof(**triangle));
-		if (!triangle[i]) {
-			for (j = 0; j < i; ++j)
-				free(triangle[j]);
-			free(triangle);
-			return NULL;
-		}
-		triangle[i][0] = triangle[i][i] = 1;
+		triangle[cord(i, 0)] = triangle[cord(i, i)] = 1;
 		for (j = 1; j < i; ++j)
-			triangle[i][j] = triangle[i - 1][j - 1] + triangle[i - 1][j];
+			triangle[cord(i, j)] = triangle[cord(i - 1, j - 1)] + triangle[cord(i - 1, j)];
 	}
 
 	return triangle;
 }
 
-static void free_pascals_triangle(uint64_t **triangle)
-{
-	size_t i;
-
-	if (!triangle)
-		return;
-
-	for (i = 0; triangle[i]; ++i)
-		free(triangle[i]);
-	free(triangle);
-}
-
-static void print_pascals_triangle(FILE *file, uint64_t **triangle)
+static void print_pascals_triangle(FILE *file, const uint64_t *triangle, size_t num_rows)
 {
 	size_t i, j;
 
-	for (i = 0; triangle[i]; ++i) {
+	for (i = 0; i < num_rows; ++i) {
 		for (j = 0; j < i + 1; ++j)
-			fprintf(file, "%" PRIu64 " ", triangle[i][j]);
+			fprintf(file, "%" PRIu64 " ", triangle[cord(i, j)]);
 		fputc('\n', file);
 	}
 }
 
 int main(int argc, char *argv[])
 {
-	uint64_t **triangle;
+	uint64_t *triangle;
 	size_t num_rows;
 	char *endptr;
 
@@ -92,8 +77,8 @@ int main(int argc, char *argv[])
 		perror("ERROR: unable to create triangle");
 		return 1;
 	}
-	print_pascals_triangle(stdout, triangle);
-	free_pascals_triangle(triangle);
+	print_pascals_triangle(stdout, triangle, num_rows);
+	free(triangle);
 	
 	return 0;
 }
