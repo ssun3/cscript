@@ -4,7 +4,7 @@ BINDIR ?= $(PREFIX)/bin
 MANDIR ?= $(PREFIX)/share/man
 
 CFLAGS ?= -O3 -march=native
-CFLAGS += -std=c99 -Wall
+CFLAGS += -std=gnu99 -Wall -D_GNU_SOURCE
 
 all: cscript
 

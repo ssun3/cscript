@@ -1,9 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0
  *
- * Copyright (C) 2018 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
+ * Copyright (C) 2018-2021 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
-
-#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,11 +10,12 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/mman.h>
 #include <fcntl.h>
 
 int main(int argc, char *argv[], char *envp[])
 {
-	int fd, fd2, input = -1, pipes[2] = { 0 }, status;
+	int fd, input = -1, pipes[2] = { 0 }, status;
 	pid_t compiler_pid;
 	char *output_path;
 
@@ -34,9 +33,9 @@ int main(int argc, char *argv[], char *envp[])
 		}
 	}
 
-	fd = open(getenv("HOME") ?: getenv("TMPDIR") ?: "/tmp", O_TMPFILE | O_EXCL | O_RDWR, S_IWUSR | S_IRUSR);
+	fd = memfd_create("cscript", 0);
 	if (fd < 0) {
-		perror("Error: unable to create temporary inode");
+		perror("Error: unable to create memfd");
 		return 1;
 	}
 	if (asprintf(&output_path, "/proc/self/fd/%d", fd) < 0) {
@@ -94,14 +93,7 @@ int main(int argc, char *argv[], char *envp[])
 		return 1;
 	}
 
-	fd2 = open(output_path, O_RDONLY);
-	if (fd2 < 0) {
-		perror("Error: unable to reopen temporary inode");
-		return 1;
-	}
-	close(fd);
-
-	if (fexecve(fd2, argv, envp) < 0) {
+	if (fexecve(fd, argv, envp) < 0) {
 		perror("Error: could not execute compiled program");
 		return 1;
 	}
