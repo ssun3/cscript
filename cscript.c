@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0
  *
- * Copyright (C) 2018-2021 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
+ * Copyright (C) 2018-2022 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
 #include <stdio.h>
@@ -60,7 +60,7 @@ int main(int argc, char *argv[], char *envp[])
 			}
 			close(pipes[0]);
 		}
-		execlp(cc, cc, "-xc", "-o", output_path, "-", NULL);
+		execlp(cc, cc, "-pipe", "-xc", "-o", output_path, "-O2", "-march=native", "-", NULL);
 		_exit(1);
 	}
 
